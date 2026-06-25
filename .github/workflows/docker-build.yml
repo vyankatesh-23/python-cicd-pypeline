@@ -1,0 +1,30 @@
+name: Build new docker image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: login Docker Hub
+        run: echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+      - name: build image
+        run: |
+          docker build -t $DOCKER_USERNAME/python-pipeline-app:${{ github.sha }} .
+          docker tag $DOCKER_USERNAME/python-pipeline-app:${{ github.sha }} $DOCKER_USERNAME/python-pipeline-app:latest
+
+      - name: docker push
+        run: |
+          docker push $DOCKER_USERNAME/python-pipeline-app:${{ github.sha }}
+          docker push $DOCKER_USERNAME/python-pipeline-app:latest
+
